@@ -1,6 +1,10 @@
-package com.ibbignerd.MediaControlsSSH;
+package com.ibbignerd.mediacontrols;
 
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,17 +13,17 @@ import java.util.logging.Logger;
 
 public class SSHManager {
 	private static final Logger LOGGER = Logger.getLogger(SSHManager.class.getName());
+	private static final String FAILED_SENDING_COMMAND = "Failed sending command: ";
 	private final int intConnectionPort;
 	private final int intTimeOut;
 	private JSch jschSSHChannel;
 	private String strUserName;
 	private String strConnectionIP;
 	private String strPassword;
-	private Session sesConnection;
+	private Session sessionConnection;
 
 	public SSHManager(String userName, String password, String connectionIP, String knownHostsFileName) {
 		doCommonConstructorActions(userName, password, connectionIP, knownHostsFileName);
-
 		intConnectionPort = 22;
 		intTimeOut = 60000;
 	}
@@ -27,7 +31,6 @@ public class SSHManager {
 	public SSHManager(String userName, String password, String connectionIP, String knownHostsFileName,
 			int connectionPort) {
 		doCommonConstructorActions(userName, password, connectionIP, knownHostsFileName);
-
 		intConnectionPort = connectionPort;
 		intTimeOut = 10000;
 	}
@@ -38,6 +41,15 @@ public class SSHManager {
 
 		intConnectionPort = connectionPort;
 		intTimeOut = timeOutMilliseconds;
+	}
+
+	private static boolean isAValidCommand(String command) {
+		if (!command.contains("info") && (!command.contains("isRadio")) && (!command.contains("app"))
+				&& (!command.contains("length")) && (!command.contains("elapsed"))) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	private void doCommonConstructorActions(String userName, String password, String connectionIP,
@@ -54,49 +66,39 @@ public class SSHManager {
 	}
 
 	public String connect() {
-		String errorMessage = "";
 		try {
-			sesConnection = jschSSHChannel.getSession(strUserName, strConnectionIP, intConnectionPort);
+			sessionConnection = jschSSHChannel.getSession(strUserName, strConnectionIP, intConnectionPort);
 
-			sesConnection.setPassword(strPassword);
-			sesConnection.setConfig("StrictHostKeyChecking", "no");
-			sesConnection.connect(intTimeOut);
-			MediaControlsSSH_UI.debugLogString("Successful connection!");
+			sessionConnection.setPassword(strPassword);
+			sessionConnection.setConfig("StrictHostKeyChecking", "no");
+			sessionConnection.connect(intTimeOut);
+			MediaControlsSSH.debugLogString("Successful connection!");
 		} catch (JSchException jschX) {
-			errorMessage = jschX.getMessage();
-			MediaControlsSSH_UI.debugLogString("Failed to connect with error: " + jschX.getMessage());
+			String jschXMessage = jschX.getMessage();
+			MediaControlsSSH.debugLogString("Failed to connect with error: " + jschXMessage);
 		}
-		return errorMessage;
+		return "";
 	}
 
 	private String logError(String errorMessage) {
 		if (errorMessage != null) {
-			LOGGER.log(Level.SEVERE, "{0}:{1} - {2}",
-				new Object[] { strConnectionIP, Integer.valueOf(intConnectionPort), errorMessage });
+			Integer connectionPort = Integer.valueOf(intConnectionPort);
+			LOGGER.log(Level.SEVERE, "{0}:{1} - {2}", new Object[] { strConnectionIP, connectionPort, errorMessage });
 		}
 		return errorMessage;
 	}
 
-	private String logWarning(String warnMessage) {
-		if (warnMessage != null) {
-			LOGGER.log(Level.WARNING, "{0}:{1} - {2}",
-				new Object[] { strConnectionIP, Integer.valueOf(intConnectionPort), warnMessage });
-		}
-		return warnMessage;
-	}
-
 	public boolean isAlive() {
-		return sesConnection.isConnected();
+		return sessionConnection.isConnected();
 	}
 
 	public String sendCommand(String command) {
-		if ((!command.contains("info")) && (!command.contains("isRadio")) && (!command.contains("app"))
-				&& (!command.contains("length")) && (!command.contains("elapsed"))) {
-			MediaControlsSSH_UI.debugLogString("Sending command: " + command);
+		if (isAValidCommand(command)) {
+			MediaControlsSSH.debugLogString("Sending command: " + command);
 		}
 		StringBuilder outputBuffer = new StringBuilder();
 		try {
-			Channel channel = sesConnection.openChannel("exec");
+			Channel channel = sessionConnection.openChannel("exec");
 			((ChannelExec)channel).setCommand(command);
 			channel.setOutputStream(System.out);
 			channel.connect();
@@ -109,20 +111,18 @@ public class SSHManager {
 			channel.disconnect();
 		} catch (JSchException ioX) {
 			ioX.printStackTrace();
-			MediaControlsSSH_UI.debugLogString("Failed sending command: " + command + ".\n With error: "
-					+ ioX.getMessage());
+			MediaControlsSSH.debugLogString(FAILED_SENDING_COMMAND + command + ".\n With error: " + ioX.getMessage());
 			return null;
 		} catch (IOException ioX) {
 			ioX.printStackTrace();
-			MediaControlsSSH_UI.debugLogString("Failed sending command: " + command + ".\n With error: "
-					+ ioX.getMessage());
+			MediaControlsSSH.debugLogString(FAILED_SENDING_COMMAND + command + ".\n With error: " + ioX.getMessage());
 			return null;
 		}
 		return outputBuffer.toString();
 	}
 
 	public void close() {
-		sesConnection.disconnect();
-		MediaControlsSSH_UI.debugLogString("Disconnecting from host.");
+		sessionConnection.disconnect();
+		MediaControlsSSH.debugLogString("Disconnecting from host.");
 	}
 }

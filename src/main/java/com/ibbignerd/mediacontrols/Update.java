@@ -1,4 +1,4 @@
-package com.ibbignerd.MediaControlsSSH;
+package com.ibbignerd.mediacontrols;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +10,7 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Update_UI extends JFrame {
+public class Update extends JFrame {
 	public URL updateURL;
 	private JButton buttonCancel;
 	private JButton buttonUpdate;
@@ -19,30 +19,30 @@ public class Update_UI extends JFrame {
 	private JLabel labelUpdateQuestion;
 	private JTextArea updateLog;
 
-	public Update_UI() {
+	public Update() {
 		initComponents();
 	}
 
 	public static void main(String[] args) {
 		try {
 			for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
+				if (DeveloperConsole.NIMBUS.equals(info.getName())) {
 					UIManager.setLookAndFeel(info.getClassName());
 					break;
 				}
 			}
 		} catch (ClassNotFoundException ex) {
-			Logger.getLogger(Update_UI.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(Update.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (InstantiationException ex) {
-			Logger.getLogger(Update_UI.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(Update.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (IllegalAccessException ex) {
-			Logger.getLogger(Update_UI.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(Update.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (UnsupportedLookAndFeelException ex) {
-			Logger.getLogger(Update_UI.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(Update.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
-				new Update_UI().setVisible(true);
+				new Update().setVisible(true);
 			}
 		});
 	}
@@ -77,13 +77,13 @@ public class Update_UI extends JFrame {
 		this.buttonCancel.setText("Cancel");
 		this.buttonCancel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				Update_UI.this.buttonCancelActionPerformed(evt);
+				Update.this.buttonCancelActionPerformed(evt);
 			}
 		});
 		this.buttonUpdate.setText("Update!");
 		this.buttonUpdate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				Update_UI.this.buttonUpdateActionPerformed(evt);
+				Update.this.buttonUpdateActionPerformed(evt);
 			}
 		});
 		GroupLayout layout = new GroupLayout(getContentPane());
@@ -126,7 +126,7 @@ public class Update_UI extends JFrame {
 
 	private void buttonUpdateActionPerformed(ActionEvent evt) {
 		try {
-			System.out.println("Update_UI media.updateURL: " + this.updateURL);
+			System.out.println("Update media.updateURL: " + this.updateURL);
 			openWebpage(this.updateURL.toURI());
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
@@ -163,6 +163,6 @@ public class Update_UI extends JFrame {
 }
 
 /*
- * Location: C:\Users\jindala\Desktop\main.jar Qualified Name: com.ibbignerd.MediaControlsSSH.Update_UI JD-Core Version:
+ * Location: C:\Users\jindala\Desktop\main.jar Qualified Name: com.ibbignerd.mediacontrols.Update JD-Core Version:
  * 0.7.0.1
  */

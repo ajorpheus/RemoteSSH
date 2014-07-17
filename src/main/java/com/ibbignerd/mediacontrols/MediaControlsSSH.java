@@ -1,4 +1,4 @@
-package com.ibbignerd.MediaControlsSSH;
+package com.ibbignerd.mediacontrols;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -9,9 +9,19 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -21,12 +31,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class MediaControlsSSH_UI extends JFrame {
+public class MediaControlsSSH extends JFrame {
 	private static final String version = "Version: 0.6.0";
 	private static final int windowWidth = 258;
 	private static final String thinChars = "[^iIlt1\\(\\)\\.,']";
-	private static DeveloperConsole_UI devConsole;
-	private static Update_UI updatePane;
+	private static DeveloperConsole devConsole;
+	private static Update updatePane;
 	SSHManager instance;
 	Timer timer;
 	private String host;
@@ -82,34 +92,34 @@ public class MediaControlsSSH_UI extends JFrame {
 	private JProgressBar progressSong;
 	private JLabel title;
 
-	public MediaControlsSSH_UI() {
+	public MediaControlsSSH() {
 		initComponents();
 		layout(true, false, false, false, false, false, false, false, 200);
-		devConsole = new DeveloperConsole_UI();
-		updatePane = new Update_UI();
+		devConsole = new DeveloperConsole();
+		updatePane = new Update();
 		this.labelVersionNumber.setText("Version: 0.6.0");
 	}
 
 	public static void main(String[] args) {
 		try {
 			for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
+				if (DeveloperConsole.NIMBUS.equals(info.getName())) {
 					UIManager.setLookAndFeel(info.getClassName());
 					break;
 				}
 			}
 		} catch (ClassNotFoundException e) {
-			Logger.getLogger(MediaControlsSSH_UI.class.getName()).log(Level.SEVERE, null, e);
+			Logger.getLogger(MediaControlsSSH.class.getName()).log(Level.SEVERE, null, e);
 		} catch (UnsupportedLookAndFeelException e) {
-			Logger.getLogger(MediaControlsSSH_UI.class.getName()).log(Level.SEVERE, null, e);
+			Logger.getLogger(MediaControlsSSH.class.getName()).log(Level.SEVERE, null, e);
 		} catch (InstantiationException e) {
-			Logger.getLogger(MediaControlsSSH_UI.class.getName()).log(Level.SEVERE, null, e);
+			Logger.getLogger(MediaControlsSSH.class.getName()).log(Level.SEVERE, null, e);
 		} catch (IllegalAccessException e) {
-			Logger.getLogger(MediaControlsSSH_UI.class.getName()).log(Level.SEVERE, null, e);
+			Logger.getLogger(MediaControlsSSH.class.getName()).log(Level.SEVERE, null, e);
 		}
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
-				new MediaControlsSSH_UI().setVisible(true);
+				new MediaControlsSSH().setVisible(true);
 			}
 		});
 	}
@@ -175,6 +185,21 @@ public class MediaControlsSSH_UI extends JFrame {
 		return ret;
 	}
 
+	public static SSHManager createSSHManager(String userName, String password, String connectionIP,
+			String knownHostsFileName) {
+		return new SSHManager(userName, password, connectionIP, knownHostsFileName);
+	}
+
+	public static SSHManager createSSHManager(String userName, String password, String connectionIP,
+			String knownHostsFileName, int connectionPort) {
+		return new SSHManager(userName, password, connectionIP, knownHostsFileName, connectionPort);
+	}
+
+	public static SSHManager createSSHManager(String userName, String password, String connectionIP,
+			String knownHostsFileName, int connectionPort, int timeOutMilliseconds) {
+		return new SSHManager(userName, password, connectionIP, knownHostsFileName, connectionPort, timeOutMilliseconds);
+	}
+
 	private void initComponents() {
 		this.panelMain = new JPanel();
 		this.panelConnection = new JPanel();
@@ -233,7 +258,7 @@ public class MediaControlsSSH_UI extends JFrame {
 
 		this.hostName.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.hostNameActionPerformed(evt);
+				MediaControlsSSH.this.hostNameActionPerformed(evt);
 			}
 		});
 		this.labelHostName.setText("Host Name:");
@@ -242,18 +267,18 @@ public class MediaControlsSSH_UI extends JFrame {
 
 		this.PassVal.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.PassValActionPerformed(evt);
+				MediaControlsSSH.this.PassValActionPerformed(evt);
 			}
 		});
 		this.PassVal.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent evt) {
-				MediaControlsSSH_UI.this.PassValKeyPressed(evt);
+				MediaControlsSSH.this.PassValKeyPressed(evt);
 			}
 		});
 		this.buttonConnect.setText("Connect To Device");
 		this.buttonConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonConnectActionPerformed(evt);
+				MediaControlsSSH.this.buttonConnectActionPerformed(evt);
 			}
 		});
 		GroupLayout panelConnectionLayout = new GroupLayout(this.panelConnection);
@@ -361,31 +386,31 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.buttonNext.setText(">>");
 		this.buttonNext.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonNextActionPerformed(evt);
+				MediaControlsSSH.this.buttonNextActionPerformed(evt);
 			}
 		});
 		this.buttonRepeat.setText("Repeat");
 		this.buttonRepeat.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonRepeatActionPerformed(evt);
+				MediaControlsSSH.this.buttonRepeatActionPerformed(evt);
 			}
 		});
 		this.buttonPlayPause.setText("Play/Pause");
 		this.buttonPlayPause.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonPlayPauseActionPerformed(evt);
+				MediaControlsSSH.this.buttonPlayPauseActionPerformed(evt);
 			}
 		});
 		this.buttonPrevious.setText("<<");
 		this.buttonPrevious.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonPreviousActionPerformed(evt);
+				MediaControlsSSH.this.buttonPreviousActionPerformed(evt);
 			}
 		});
 		this.buttonShuffle.setText("Shuffle");
 		this.buttonShuffle.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonShuffleActionPerformed(evt);
+				MediaControlsSSH.this.buttonShuffleActionPerformed(evt);
 			}
 		});
 		GroupLayout panelMediaControlsLayout = new GroupLayout(this.panelMediaControls);
@@ -428,25 +453,25 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.buttonVolMute.setText("Mute");
 		this.buttonVolMute.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonVolMuteActionPerformed(evt);
+				MediaControlsSSH.this.buttonVolMuteActionPerformed(evt);
 			}
 		});
 		this.buttonVolDown.setText("-");
 		this.buttonVolDown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonVolDownActionPerformed(evt);
+				MediaControlsSSH.this.buttonVolDownActionPerformed(evt);
 			}
 		});
 		this.buttonVolUp.setText("+");
 		this.buttonVolUp.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonVolUpActionPerformed(evt);
+				MediaControlsSSH.this.buttonVolUpActionPerformed(evt);
 			}
 		});
 		this.buttonVolMax.setText("Max");
 		this.buttonVolMax.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonVolMaxActionPerformed(evt);
+				MediaControlsSSH.this.buttonVolMaxActionPerformed(evt);
 			}
 		});
 		GroupLayout panelVolumeLayout = new GroupLayout(this.panelVolume);
@@ -479,13 +504,13 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.buttonPanDislike.setText("Dislike");
 		this.buttonPanDislike.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonPanDislikeActionPerformed(evt);
+				MediaControlsSSH.this.buttonPanDislikeActionPerformed(evt);
 			}
 		});
 		this.buttonPanLike.setText("Like");
 		this.buttonPanLike.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonPanLikeActionPerformed(evt);
+				MediaControlsSSH.this.buttonPanLikeActionPerformed(evt);
 			}
 		});
 		GroupLayout panelPandoraLayout = new GroupLayout(this.panelPandora);
@@ -506,19 +531,19 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.buttoniTunesHate.setText("Hate");
 		this.buttoniTunesHate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttoniTunesHateActionPerformed(evt);
+				MediaControlsSSH.this.buttoniTunesHateActionPerformed(evt);
 			}
 		});
 		this.buttoniTunesWish.setText("Wish");
 		this.buttoniTunesWish.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttoniTunesWishActionPerformed(evt);
+				MediaControlsSSH.this.buttoniTunesWishActionPerformed(evt);
 			}
 		});
 		this.buttoniTunesLike.setText("Like");
 		this.buttoniTunesLike.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttoniTunesLikeActionPerformed(evt);
+				MediaControlsSSH.this.buttoniTunesLikeActionPerformed(evt);
 			}
 		});
 		GroupLayout paneliTunesRadioLayout = new GroupLayout(this.paneliTunesRadio);
@@ -541,19 +566,19 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.buttonDisconnect.setText("Disconnect");
 		this.buttonDisconnect.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent evt) {
-				MediaControlsSSH_UI.this.buttonDisconnectMouseClicked(evt);
+				MediaControlsSSH.this.buttonDisconnectMouseClicked(evt);
 			}
 		});
 		this.buttonDisconnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.buttonDisconnectActionPerformed(evt);
+				MediaControlsSSH.this.buttonDisconnectActionPerformed(evt);
 			}
 		});
 		this.labelVersionNumber.setForeground(new Color(51, 51, 255));
 		this.labelVersionNumber.setText("Version: 0.6.0");
 		this.labelVersionNumber.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent evt) {
-				MediaControlsSSH_UI.this.labelVersionNumberMouseClicked(evt);
+				MediaControlsSSH.this.labelVersionNumberMouseClicked(evt);
 			}
 		});
 		GroupLayout panelFooterLayout = new GroupLayout(this.panelFooter);
@@ -610,7 +635,7 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.launchMusic.setText("Music");
 		this.launchMusic.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.launchMusicActionPerformed(evt);
+				MediaControlsSSH.this.launchMusicActionPerformed(evt);
 			}
 		});
 		this.menuLaunch.add(this.launchMusic);
@@ -618,7 +643,7 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.launchPandora.setText("Pandora");
 		this.launchPandora.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.launchPandoraActionPerformed(evt);
+				MediaControlsSSH.this.launchPandoraActionPerformed(evt);
 			}
 		});
 		this.menuLaunch.add(this.launchPandora);
@@ -626,7 +651,7 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.launchSpotify.setText("Spotify");
 		this.launchSpotify.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.launchSpotifyActionPerformed(evt);
+				MediaControlsSSH.this.launchSpotifyActionPerformed(evt);
 			}
 		});
 		this.menuLaunch.add(this.launchSpotify);
@@ -634,7 +659,7 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.launchDownCast.setText("DownCast");
 		this.launchDownCast.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.launchDownCastActionPerformed(evt);
+				MediaControlsSSH.this.launchDownCastActionPerformed(evt);
 			}
 		});
 		this.menuLaunch.add(this.launchDownCast);
@@ -646,7 +671,7 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.optionsDebug.setText("Debug Console");
 		this.optionsDebug.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.optionsDebugActionPerformed(evt);
+				MediaControlsSSH.this.optionsDebugActionPerformed(evt);
 			}
 		});
 		this.menuOptions.add(this.optionsDebug);
@@ -654,7 +679,7 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.optionsUpdate.setText("Check for Update");
 		this.optionsUpdate.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
-				MediaControlsSSH_UI.this.optionsUpdateActionPerformed(evt);
+				MediaControlsSSH.this.optionsUpdateActionPerformed(evt);
 			}
 		});
 		this.menuOptions.add(this.optionsUpdate);
@@ -744,7 +769,7 @@ public class MediaControlsSSH_UI extends JFrame {
 	private void labelVersionNumberMouseClicked(MouseEvent evt) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
-				new Info_UI().setVisible(true);
+				new Info().setVisible(true);
 			}
 		});
 	}
@@ -853,7 +878,7 @@ public class MediaControlsSSH_UI extends JFrame {
 
 	private String connect() {
 		debugLogString("Starting mobile connection with hostname: " + this.host + " and port " + this.port + ".");
-		this.instance = new SSHManager("mobile", this.password, this.host, "", this.port);
+		this.instance = createSSHManager("mobile", this.password, this.host, "", this.port);
 		String errorMessage = this.instance.connect();
 		if (!errorMessage.equals("")) {
 			System.out.println(errorMessage);
@@ -888,7 +913,7 @@ public class MediaControlsSSH_UI extends JFrame {
 				System.out.println(updatePane.updateURL);
 			} catch (MalformedURLException ex) {
 				debugLogString("Improper URL format!");
-				Logger.getLogger(MediaControlsSSH_UI.class.getName()).log(Level.SEVERE, null, ex);
+				Logger.getLogger(MediaControlsSSH.class.getName()).log(Level.SEVERE, null, ex);
 			}
 			for (int j = 1; j < this.updateText.size(); j++) {
 				System.out.println((String)this.updateText.get(j));
@@ -906,37 +931,37 @@ public class MediaControlsSSH_UI extends JFrame {
 		this.timer = new Timer();
 		TimerTask task = new TimerTask() {
 			public void run() {
-				if (MediaControlsSSH_UI.this.isAlive()) {
-					String text = MediaControlsSSH_UI.this.sendCommand("media info");
+				if (MediaControlsSSH.this.isAlive()) {
+					String text = MediaControlsSSH.this.sendCommand("media info");
 					if (text != null) {
-						MediaControlsSSH_UI.this.parseInfo("songinfo", text);
+						MediaControlsSSH.this.parseInfo("songinfo", text);
 					} else {
-						MediaControlsSSH_UI.this.close();
+						MediaControlsSSH.this.close();
 					}
-					MediaControlsSSH_UI.this.title.setText(MediaControlsSSH_UI.ellipsis(
-						MediaControlsSSH_UI.this.songInfo[3].substring(1), 27));
-					MediaControlsSSH_UI.this.album.setText(MediaControlsSSH_UI.ellipsis(
-						MediaControlsSSH_UI.this.songInfo[2].substring(1), 27));
-					MediaControlsSSH_UI.this.artist.setText(MediaControlsSSH_UI.ellipsis(
-						MediaControlsSSH_UI.this.songInfo[1].substring(1), 27));
+					MediaControlsSSH.this.title.setText(MediaControlsSSH.ellipsis(
+						MediaControlsSSH.this.songInfo[3].substring(1), 27));
+					MediaControlsSSH.this.album.setText(MediaControlsSSH.ellipsis(
+						MediaControlsSSH.this.songInfo[2].substring(1), 27));
+					MediaControlsSSH.this.artist.setText(MediaControlsSSH.ellipsis(
+						MediaControlsSSH.this.songInfo[1].substring(1), 27));
 
-					String isRadio = MediaControlsSSH_UI.this.sendCommand("media isRadio");
-					MediaControlsSSH_UI.this.parseInfo("parsebundle", "com.apple.Music");
-					if (!MediaControlsSSH_UI.this.bundleID.contains("(null)")) {
-						if (MediaControlsSSH_UI.this.bundleID.contains("com.apple.Music")) {
+					String isRadio = MediaControlsSSH.this.sendCommand("media isRadio");
+					MediaControlsSSH.this.parseInfo("parsebundle", "com.apple.Music");
+					if (!MediaControlsSSH.this.bundleID.contains("(null)")) {
+						if (MediaControlsSSH.this.bundleID.contains("com.apple.Music")) {
 							if (isRadio.contains("1")) {
-								MediaControlsSSH_UI.this.layout(false, true, false, true, true, false, true, true, 430);
+								MediaControlsSSH.this.layout(false, true, false, true, true, false, true, true, 430);
 							} else {
-								MediaControlsSSH_UI.this.layout(false, true, true, true, true, false, false, true, 390);
+								MediaControlsSSH.this.layout(false, true, true, true, true, false, false, true, 390);
 							}
-						} else if (MediaControlsSSH_UI.this.bundleID.contains("com.pandora")) {
-							MediaControlsSSH_UI.this.layout(false, true, false, true, true, true, false, true, 470);
+						} else if (MediaControlsSSH.this.bundleID.contains("com.pandora")) {
+							MediaControlsSSH.this.layout(false, true, false, true, true, true, false, true, 470);
 						}
 					} else {
-						MediaControlsSSH_UI.this.layout(false, true, false, true, true, false, false, true, 390);
+						MediaControlsSSH.this.layout(false, true, false, true, true, false, false, true, 390);
 					}
-					String length = MediaControlsSSH_UI.this.sendCommand("media length");
-					String time = MediaControlsSSH_UI.this.sendCommand("media elapsed");
+					String length = MediaControlsSSH.this.sendCommand("media length");
+					String time = MediaControlsSSH.this.sendCommand("media elapsed");
 					if (!time.contains("nan")) {
 						double total = Double.parseDouble(length);
 						double elapsed = Double.parseDouble(time);
@@ -945,13 +970,13 @@ public class MediaControlsSSH_UI extends JFrame {
 						long seconds = TimeUnit.SECONDS.toSeconds(sec) - TimeUnit.SECONDS.toMinutes(sec) * 60L;
 						long mins = TimeUnit.SECONDS.toMinutes(sec);
 						if (seconds >= 10L) {
-							MediaControlsSSH_UI.this.labelTimeLeft.setText(mins + ":" + seconds);
+							MediaControlsSSH.this.labelTimeLeft.setText(mins + ":" + seconds);
 						} else {
-							MediaControlsSSH_UI.this.labelTimeLeft.setText(mins + ":0" + seconds);
+							MediaControlsSSH.this.labelTimeLeft.setText(mins + ":0" + seconds);
 						}
-						MediaControlsSSH_UI.this.progressSong.setValue(percent);
+						MediaControlsSSH.this.progressSong.setValue(percent);
 					}
-				}
+			}
 			}
 		};
 		this.timer.scheduleAtFixedRate(task, 0L, 1000L);

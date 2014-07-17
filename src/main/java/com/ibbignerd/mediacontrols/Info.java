@@ -1,41 +1,41 @@
-package com.ibbignerd.MediaControlsSSH;
+package com.ibbignerd.mediacontrols;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Info_UI extends JFrame {
+public class Info extends JFrame {
 	private JLabel label1;
 	private JLabel label2;
 	private JLabel label3;
 	private JLabel label4;
 	private JPanel panelMain;
 
-	public Info_UI() {
+	public Info() {
 		initComponents();
 	}
 
 	public static void main(String[] args) {
 		try {
 			for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
+				if (DeveloperConsole.NIMBUS.equals(info.getName())) {
 					UIManager.setLookAndFeel(info.getClassName());
 					break;
 				}
 			}
 		} catch (ClassNotFoundException ex) {
-			Logger.getLogger(Info_UI.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(Info.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (InstantiationException ex) {
-			Logger.getLogger(Info_UI.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(Info.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (IllegalAccessException ex) {
-			Logger.getLogger(Info_UI.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(Info.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (UnsupportedLookAndFeelException ex) {
-			Logger.getLogger(Info_UI.class.getName()).log(Level.SEVERE, null, ex);
+			Logger.getLogger(Info.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
-				new Info_UI().setVisible(true);
+				new Info().setVisible(true);
 			}
 		});
 	}
@@ -91,6 +91,5 @@ public class Info_UI extends JFrame {
 }
 
 /*
- * Location: C:\Users\jindala\Desktop\main.jar Qualified Name: com.ibbignerd.MediaControlsSSH.Info_UI JD-Core Version:
- * 0.7.0.1
+ * Location: C:\Users\jindala\Desktop\main.jar Qualified Name: com.ibbignerd.mediacontrols.Info JD-Core Version: 0.7.0.1
  */
